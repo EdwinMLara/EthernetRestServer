@@ -14,8 +14,8 @@ bool banderaTempo = false;
 
 boolean banderasTemporizador[4];
 
-unsigned long startmillis;
-unsigned long startmillisTemporizador;
+unsigned long startmillis = 0;
+unsigned long startmillisTemporizador = 0;
 
 unsigned long teG1;
 unsigned long taG1;
@@ -25,6 +25,7 @@ unsigned long taG2;
 unsigned long desFase = 0;
 
 DynamicJsonDocument doc(200);
+
 DynamicJsonDocument doc2(200);
 
 void ethernetConfiguration(){
@@ -64,31 +65,6 @@ void configuracionTemporizador(uint8_t te1,uint8_t ta1,uint8_t te2,uint8_t ta2){
   taG1 = teG1 + ta1*60*1000;
   teG2 = teG1 + taG1 + te2*60*1000;
   taG2 = teG1 + taG1 + teG2 + ta2*60*1000;
-}
-
-char* Seguntos2Time(unsigned long tiempo){
-    char str[20] = "";
-    char aux[20] = "";
-    unsigned long reciduo,hr,minu,seg;
-    seg = tiempo % 60;
-    reciduo = tiempo / 60;
-    minu = reciduo % 60;
-    reciduo = reciduo / 60;
-    hr = reciduo%60;
-    itoa(hr,aux,10);
-    strcat(str,aux);
-    strcat(str," : ");
-    itoa(minu,aux,10);
-    strcat(str,aux);
-    strcat(str," : ");
-    itoa(seg,aux,10);
-    strcat(str,aux);
-    Serial.println("Adentro ");
-    Serial.println(str);
-
-    char *strReturn = malloc(20);
-    strcpy(strReturn, str);
-    return strReturn;
 }
 
 void temporizador(unsigned long countTime){
@@ -173,9 +149,9 @@ uint8_t getTypeRequest(const char request[]){
       memcpy(body,&request[indexs[0]],bodyLength);
 
       Serial.println(body);
-      delay(20);
-      DeserializationError error = deserializeJson(doc2,body);
       
+      DeserializationError error = deserializeJson(doc2,body);
+      delay(20);
       if (error) {
         Serial.print(F("deserializeJson() failed: "));
         Serial.println(error.f_str());
@@ -184,23 +160,35 @@ uint8_t getTypeRequest(const char request[]){
 
       delay(10);
 
-      if(doc.containsKey("tempoConfig")){
+      if(doc2.containsKey("tC")){
         Serial.println("Configurando Temporizador");
+        uint8_t tC = doc2["tC"];
+        switch(tC){
+          case 0:
+            banderaTempo = false;
+          case 1:
+            uint8_t teC1 = doc2["teC1"];
+            uint8_t taC1 = doc2["taC1"];
+            uint8_t teC2 = doc2["teC2"];
+            uint8_t taC2 = doc2["taC2"];
+            configuracionTemporizador(teC1,taC1,teC2,taC2);
+            break;
+          case 2:
+            startmillisTemporizador = millis();
+            banderaTempo = true;
+            break;
+        }    
       }else{
         uint8_t encender_val = doc2["encender"];
         uint8_t apagar_val = doc2["apagar"];
-        uint8_t tempo = doc2["tempo"];
         uint8_t desfase = doc2["desfase"];
-
+        uint8_t tempo = doc2["tempo"];
+        
         if(encender_val)
           lunchPulse(encender);
   
         if(apagar_val)
           lunchPulse(apagar);
-  
-        if(tempo){
-          Serial.println("Se encendio el Temporizador");
-        }
         
         if(desfase){
           Serial.println("defasamiento en la señal");  
@@ -219,17 +207,9 @@ uint8_t getTypeRequest(const char request[]){
 void setup() {
   Serial.begin(9600);
   while (!Serial);
-
-  startmillis = 0;
-  startmillisTemporizador = 0;
   configuracionTemporizador(4,2,5,13);
-
-  Serial.println("Configuracion Temporizador: ");
-  Serial.println(teG1);
-  Serial.println(taG1);
-  Serial.println(teG2);
-  Serial.println(taG2);
   
+  Serial.println("Default Timer Configuration"); 
   Serial.println("Servidor Ethernet.");
   
   pinMode(encender,OUTPUT);
@@ -252,8 +232,8 @@ void loop() {
     char *aux,aux2;
     Serial.println("Nuevo cliente conectado");
       while(client.connected() && bandera){
-          if(client.available()){
-              
+          if(client.available()){  
+            JsonObject obj = doc.to<JsonObject>();         
               uint8_t typeRequest = 0,count = 0;
               char request[500];
               
@@ -267,31 +247,24 @@ void loop() {
               aux = request;
               
               typeRequest = getTypeRequest(aux);
-              
               switch(typeRequest){
                 case 1: 
-                  doc["status_request"].set(200);
-                  doc["result"].set("request success");
+                  obj["status_request"].set(200);
+                  obj["result"].set("request success");
                   break;
                 case 2:
-                  doc["status_sistem"].set(status_sistem);
-                  doc["status_Tempo"].set(banderaTempo);
-                  doc["desfase"].set(desFase);
-                  /*if(banderaTempo){
-                    unsigned long currentmillis,countTime2;
-                    currentmillis = millis(); 
-                    countTime2 = (currentmillis - startmillisTemporizador) + desFase;
-                    aux2 = Seguntos2Time(countTime2/1000); 
-                    Serial.println(aux2);
-                  }*/
+                  obj["status_sistem"].set(status_sistem);
+                  obj["status_Tempo"].set(banderaTempo);
+                  obj["desfase"].set(desFase);
+                  obj["time"].set(startmillisTemporizador);
                   break;
                 default:
-                  doc["status"].set(200);
-                  doc["result"].set("error request");
+                  obj["status"].set(200);
+                  obj["result"].set("error request");
               }
               
               char output[80]="";
-              serializeJson(doc,output);
+              serializeJson(obj,output);
               Serial.println(output);
               
               delay(10);
@@ -302,18 +275,17 @@ void loop() {
               client.println();
               
               client.println(output);
+              delay(20);
+              obj.clear();
               break;   
           }   
       }
-      delay(10);
       client.stop();
       client.flush();
-      doc.clear();
       Serial.println("");
       Serial.println("Cliente desconectado");
   }
   
-
   if(banderaPulse){
     unsigned long countTime; 
     countTime = millis() - startmillis;
@@ -325,6 +297,5 @@ void loop() {
     countTime = (millis() - startmillisTemporizador) + desFase;
     temporizador(countTime);
   }
-
   delay(10);
 }
