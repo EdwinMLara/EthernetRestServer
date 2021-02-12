@@ -25,6 +25,7 @@ unsigned long taG2;
 unsigned long desFase = 0;
 
 DynamicJsonDocument doc(200);
+JsonObject obj;
 
 DynamicJsonDocument doc2(200);
 
@@ -151,7 +152,8 @@ uint8_t getTypeRequest(const char request[]){
       Serial.println(body);
       
       DeserializationError error = deserializeJson(doc2,body);
-      delay(20);
+      delay(10);
+    
       if (error) {
         Serial.print(F("deserializeJson() failed: "));
         Serial.println(error.f_str());
@@ -159,7 +161,6 @@ uint8_t getTypeRequest(const char request[]){
       }
 
       delay(10);
-
       if(doc2.containsKey("tC")){
         Serial.println("Configurando Temporizador");
         uint8_t tC = doc2["tC"];
@@ -177,7 +178,8 @@ uint8_t getTypeRequest(const char request[]){
             startmillisTemporizador = millis();
             banderaTempo = true;
             break;
-        }    
+        }
+        delay(10);    
       }else{
         uint8_t encender_val = doc2["encender"];
         uint8_t apagar_val = doc2["apagar"];
@@ -193,6 +195,8 @@ uint8_t getTypeRequest(const char request[]){
         if(desfase){
           Serial.println("defasamiento en la señal");  
         }
+
+        delay(10);
       }
        
       doc2.clear();
@@ -208,6 +212,7 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);
   configuracionTemporizador(4,2,5,13);
+  obj = doc.to<JsonObject>();     
   
   Serial.println("Default Timer Configuration"); 
   Serial.println("Servidor Ethernet.");
@@ -233,7 +238,7 @@ void loop() {
     Serial.println("Nuevo cliente conectado");
       while(client.connected() && bandera){
           if(client.available()){  
-            JsonObject obj = doc.to<JsonObject>();         
+                
               uint8_t typeRequest = 0,count = 0;
               char request[500];
               
@@ -243,6 +248,7 @@ void loop() {
                 request[count] = c;
                 count++;
               }
+              
               request[count] = '\0';
               aux = request;
               
@@ -262,28 +268,29 @@ void loop() {
                   obj["status"].set(200);
                   obj["result"].set("error request");
               }
+              delay(50);
               
               char output[80]="";
               serializeJson(obj,output);
               Serial.println(output);
+              delay(50);
               
-              delay(10);
-              client.println("HTTP/1.1 200 OK"); 
+              client.println("HTTP/1.1 200 OK");
               client.print("Content-Length: ");
               client.println(measureJson(doc));
-              client.println("Content-Type: application/json");
-              client.println();
-              
+              client.println("Content-Type: text/plain");
+              client.println();   
               client.println(output);
-              delay(20);
-              obj.clear();
+              
+              delay(50);
               break;   
           }   
       }
-      client.stop();
-      client.flush();
       Serial.println("");
       Serial.println("Cliente desconectado");
+      client.flush();
+      client.stop();
+      obj.clear();
   }
   
   if(banderaPulse){
