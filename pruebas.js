@@ -12,6 +12,7 @@ const bodyArray = [{...bodyStart},{...bodyStart,encender : 1}
     ,{...bodyStart,apagar : 1},{...bodyStart,desfase: 1}];
 
 postRequestAxios = async (url,body = undefined) =>{
+    let res;
     await axios({
         method:'post',
         url:url,
@@ -19,13 +20,13 @@ postRequestAxios = async (url,body = undefined) =>{
         data: body,
         timeout: 5000
     }).then(response => {
-        res = true;
         console.log(response.data);
+        res = true;
     }).catch(error =>{
         console.log(error);
         res = false;
     })
-    return true;
+    return res;
 }
 
 const esperar = (time) => {
@@ -37,17 +38,12 @@ const esperar = (time) => {
     })
 }
 
-function checkToError(response){
-    if(response == undefined) throw "Problema con la respuesta";
-    console.log(response.data);
-}
-
 (async () =>{
     for(let i=1;i<3;i++){
         console.log("calling",i);
         let response = await postRequestAxios(url,bodyArray[i])
         
-        response ? console.log("respuesta existosa") : console.log("mala respuesta"); 
+        console.log(`Respuesta ${response}`);  
         
         await esperar(10000).then((msj) =>{
             console.log(msj);

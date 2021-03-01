@@ -253,27 +253,30 @@ void loop() {
               aux = request;
               
               typeRequest = getTypeRequest(aux);
+              
               switch(typeRequest){
                 case 1: 
                   obj["status_request"].set(200);
                   obj["result"].set("request success");
+                  delay(20);
                   break;
                 case 2:
                   obj["status_sistem"].set(status_sistem);
                   obj["status_Tempo"].set(banderaTempo);
                   obj["desfase"].set(desFase);
                   obj["time"].set(startmillisTemporizador);
+                  delay(20);
                   break;
                 default:
                   obj["status"].set(200);
                   obj["result"].set("error request");
+                  delay(20);
               }
-              delay(50);
               
               char output[80]="";
               serializeJson(obj,output);
               Serial.println(output);
-              delay(50);
+              delay(40);
               
               client.println("HTTP/1.1 200 OK");
               client.print("Content-Length: ");
@@ -282,7 +285,7 @@ void loop() {
               client.println();   
               client.println(output);
               
-              delay(50);
+              delay(40);
               break;   
           }   
       }
