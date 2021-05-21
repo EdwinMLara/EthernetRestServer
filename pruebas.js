@@ -1,71 +1,3 @@
-const { retry } = require('async');
-const axios = require('axios');
-const { timingSafeEqual } = require('crypto');
-const url = 'http://10.0.0.208/update';
-
-const bodyStart = {
-    encender : 0,
-    apagar : 0,
-    desfase : 0
-}
-
-const Tc = {
-    tC : 0,
-    teC1 : 1,
-    taC1 : 4,
-    teC2 : 1,
-    taC2 : 3
-}
-
-const bodyArray = [{...bodyStart,encender : 1}
-    ,{...bodyStart,apagar : 1},{...bodyStart,desfase: 1}];
-
-const tCArray = [{...Tc},{...Tc,tC:1},{...Tc,tC:2}];
-
-postRequestAxios = async (url,body = undefined) =>{
-    let res;
-    await axios({
-        method:'post',
-        url:url,
-        headers:{'Content-type':'text/plain'},
-        data: body,
-        timeout: 5000
-    }).then(response => {
-        console.log(response.data);
-        res = true;
-    }).catch(error =>{
-        console.log(error);
-        res = false;
-    })
-    return res;
-}
-
-const esperar = (time,final = 0) => {
-    console.log("Esperando");
-    return new Promise((resolver,reject) =>{
-        if(final === 2){
-            reject("Se cancelo la espera");
-        }else{
-            setTimeout(()=>{
-                resolver("Termino la espera");
-            },time);
-        }
-    })
-}
-
-/*(async (array) =>{
-    for(let i=0;i<array.length;i++){
-        console.log("calling",i);
-        await postRequestAxios(url,array[i]) 
-        
-        await esperar(10000,i).then((msj) =>{
-            console.log("resolver  ",msj);
-        }).catch(error =>{
-            console.log("reject ", error);
-        });
-    }
-})(bodyArray)*/
-
 var findPeakElement = function(nums) {
     let peak = 0;
     for (let i=1;i<nums.length;i++){
@@ -212,6 +144,9 @@ var lengthOfLongestSubstring = function(s) {
             if(auxSrtResult.length > betterResult){
                 betterResult = auxSrtResult.length;
             }
+            if(betterResult >= 95){
+                break;
+            }
 
             auxS = auxS.slice(1,auxS.length);
         }
@@ -221,32 +156,183 @@ var lengthOfLongestSubstring = function(s) {
     return betterResult;
 };
 
-console.time("measureSubString")
+/*console.time("measureSubString")
 console.log(lengthOfLongestSubstring(strFail));
 console.timeEnd("measureSubString");
 
-console.log("--------------------------------------");
+console.log("--------------------------------------");*/
 
 var lengthOfLongestSubstring2 = function(s) {
     const auxSet2 = new Set(); 
-    let betterResult = 0;
-    let i = 0;
-    for(let j=1;j<s.length;j++){
-        if(auxSet2.has(s[j])){
-            let maxStrLength = (j- i);
-            i = j;
-            auxSet2.clear();
-            auxSet2.add([s[j]]);
-            if(betterResult < maxStrLength){
-                betterResult = maxStrLength -1;
+    let betterResult = 1;
+    let maxStrLength = 5*Math.pow(10,4);
+    let auxS = s;
+
+    if(s.length > 0 && s.length <= maxStrLength){
+        for(let i = 0;i<s.length;i++){
+            let auxi = 0;
+            auxSet2.add(auxS[0]);
+            for(let j=1;j<auxS.length;j++){
+                if(auxSet2.has(auxS[j])){
+                    let maxStrLength = (j-auxi);
+                    auxi = j;
+                    auxSet2.clear();
+                    auxSet2.add(auxS[j]);
+                    if(betterResult < maxStrLength){
+                        betterResult = maxStrLength;
+                    }
+                }else{
+                    auxSet2.add(auxS[j]);
+                    if(j === (auxS.length -1)){
+                        let maxStrLength = (j-auxi) + 1;
+                        if(betterResult < maxStrLength){                 
+                            betterResult = maxStrLength;
+                        }
+                    }
+                }
             }
-        }else{
-            auxSet2.add(s[j]);
+            auxSet2.clear();
+            auxS = auxS.slice(1,auxS.length);
+            if(betterResult >= 95){
+                break;
+            }
         }
-    }
-    return betterResult;
+        
+        return betterResult;
+    }else{
+        return 0
+    }   
 }
 
+/*let strDirecion = "pwwkew";
 console.time("measureSubString2")
 console.log(lengthOfLongestSubstring2(strFail));
-console.timeEnd("measureSubString2");
+console.timeEnd("measureSubString2");*/
+
+
+const auxSumhourglass = [[-9, -9, -9, 1, 1, 1],
+[0, -9, 0, 4, 3, 2],
+[-9, -9, -9, 1, 2, 3],
+[0, 0, 8, 6, 6, 0],
+[0, 0, 0, -2, 0, 0],
+[0, 0, 1, 2, 4, 0]];
+
+function hourglassSum(arr) {
+    let row = arr.length;
+    let col = arr[0].length;
+    let result = -1000;
+    for (let i=1;i<row-1;i++){
+        for (let k=1;k<col-1;k++){
+            let sum = arr[i-1][k-1] + arr[i-1][k] + arr[i-1][k+1];
+            sum += arr[i][k];
+            sum += arr[i+1][k-1] + arr[i+1][k] + arr[i+1][k+1];
+            if(sum>result){
+                result = sum;
+            }
+        }
+    }
+    return result;
+}
+
+/*console.log("HackerRank");
+console.log(auxSumhourglass);
+console.log(hourglassSum(auxSumhourglass));*/
+
+function solve(meal_cost, tip_percent, tax_percent) {
+    let aux_tip = tip_percent/100;
+    let aux_tax = tax_percent/100;
+    let result  = meal_cost + (meal_cost*aux_tip) + (meal_cost*aux_tax);
+    console.log(Math.round(result));
+}
+
+
+/*console.log("hacker rand day 3");
+solve(12,20,8);*/
+
+function processData(input){
+    let straux = input.split('\n');
+    let N = parseInt(straux[0]);
+
+    for(let k=1;k<=N;k++){
+        let par = "";
+        let inpar = ""
+        for(let i=0;i<straux[k].length;i++){
+            if(i%2 != 0){
+                inpar = inpar + straux[k][i];
+            }else{
+                par = par + straux[k][i];
+            }
+        }
+        let result = par+" "+inpar;
+        console.log(result);
+    }
+} 
+
+/*let test = "2\nHacker\nRank";
+console.log("hacker rand day 6");
+processData(test);*/
+
+const fs = require('fs');
+const { resourceLimits } = require('node:worker_threads');
+   
+const data = fs.readFileSync('./input01.txt',
+            {encoding:'utf8', flag:'r'});
+function processData(input) {
+    let difInput = input.split("\n");
+    let test = difInput.length-difInput[0]-1;
+    let can = parseInt(difInput[0]);
+    let m = new Map();
+    for (let i=1;i<=can;i++){
+        let aux = difInput[i].split(" ");
+        m.set(aux[0],aux[1]);
+    }
+
+    for(let i=1;i<=test;i++){
+        if(m.has(difInput[can+i])){
+            let strResul = `${difInput[can+i]}=${m.get(difInput[can+i])}`;
+            console.log(strResul);
+        }else{
+            console.log("Not found");
+        }
+    }
+}
+/**Dia 7 creo de hacker rank 
+processData(data);*/
+
+function factorial(n){
+    let fac = 1;
+    if(n>0){
+        fac = factorial(n-1) * n;
+        return fac;
+    }
+    return fac;
+}
+
+/**Dia 9 creo de hacker rank 
+factorial(3);*/
+
+
+function binary(n){
+    let result = [];
+    let secuential = 0;
+    while(n>0){
+        if(n%2 === 1){
+            result.push(1);
+        }else{
+            result.push(0);
+        }
+
+        n = Math.floor((n/2));
+    }  
+    for(let i=result.length-1;i>=0;i--){
+        if(result[i] === 1){
+            secuential++;
+        }else{
+            break;
+        }
+    }
+    console.log(result);
+    console.log(secuential);
+}
+
+binary(439);
