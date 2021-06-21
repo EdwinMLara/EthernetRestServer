@@ -1,6 +1,6 @@
 #include <string.h>
 #include <SPI.h>
-#include <Ethernet.h>  
+#include <Ethernet.h>
 
 EthernetServer server(80);
 
@@ -72,36 +72,31 @@ void loop() {
               if(strstr(request,"POST") != NULL){
                 Serial.println("POST");
                 int ppr = processPostRequest(request);
-                if(ppr){
-                  strcpy(response, "{\"status\":200,\"response\":\"updated\"}");
-                }else{
-                  strcpy(response, "{\"status\":500,\"response\":\"error\"}");
-                }
               }
-
-              if(strstr(request,"GET") != NULL){
-                Serial.println("GET");
-                int auxSeconds = timeCount/1000;
-                char aux[15];
-                String(c1.state).toCharArray(aux,15);
-                strcpy(response, "{\"status\":200,\"response\":{\"control1\":");
-                strcat(response,aux);
-                strcat(response,",\"control2\":");
-                String(c2.state).toCharArray(aux,15);
-                strcat(response,aux);
-                strcat(response,",\"tempo\":{\"state\":");
-                String(banderaTempo).toCharArray(aux,15);
-                strcat(response,aux);
-                strcat(response,",\"time\":");
-                String(auxSeconds).toCharArray(aux,15);
-                strcat(response,aux);
-                strcat(response,"}}}");
-              }
+              
+              int auxSeconds = timeCount/1000;
+              char aux[15];
+              String(c1.state).toCharArray(aux,15);
+              strcpy(response, "{\"status\":200,\"response\":{\"control1\":");
+              strcat(response,aux);
+              strcat(response,",\"control2\":");
+              String(c2.state).toCharArray(aux,15);
+              strcat(response,aux);
+              strcat(response,",\"tempo\":{\"state\":");
+              String(banderaTempo).toCharArray(aux,15);
+              strcat(response,aux);
+              strcat(response,",\"time\":");
+              String(auxSeconds).toCharArray(aux,15);
+              strcat(response,aux);
+              strcat(response,"}}}");
+              
               
               client.println("HTTP/1.1 200 OK");
               client.println(); 
               client.print(response);
               delay(5);   
+
+              //Serial.println(response);
               break;   
         }   
       }

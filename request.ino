@@ -71,6 +71,7 @@ uint8_t processPostRequest(const char request[]){
     int bodyLength = (indexs[1] - indexs[0]) + 3;
     char body[bodyLength];
     memcpy(body,&request[indexs[0]],bodyLength);
+    
     int* posI = numIntruccionsPos(body,3);
     
     int* insR = str2instruccions(body,posI[0],4);
@@ -86,7 +87,9 @@ uint8_t processPostRequest(const char request[]){
       iniciarBanderasTempo();
       controlFunction(&c1,1);
       controlFunction(&c2,1);
-      tempoStartMillis = millis();
+      tempoStartMillis = millis(); 
+      desfase = 0;
+      timeCount = (millis() - tempoStartMillis);
       banderaTempo = true;
       Serial.println("Iniciando Tempo");
       result = 3;
